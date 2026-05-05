@@ -735,6 +735,8 @@ pub struct QueuePairBuilder {
     rq_psn: Option<u32>,
     /// service level (0-15). Higher value means higher priority.
     service_level: u8,
+    /// SRQ
+    srq: Option<*mut ffi::ibv_srq>,
 }
 
 impl QueuePairBuilder {
@@ -797,6 +799,7 @@ impl QueuePairBuilder {
                 || qp_type == ffi::ibv_qp_type::IBV_QPT_UC)
                 .then_some(0),
             service_level: 0,
+            srq: None,
         }
     }
 
@@ -994,6 +997,12 @@ impl QueuePairBuilder {
         self
     }
 
+    /// Set the Shared Receive Queue (SRQ) associated with this QP.
+    pub fn set_srq(&mut self, srq: *mut ffi::ibv_srq) -> &mut Self {
+        self.srq = Some(srq);
+        self
+    }
+
     /// Set the number of outstanding RDMA reads & atomic operations on the destination Queue Pair.
     ///
     /// This defaults to 1.
@@ -1118,7 +1127,7 @@ impl QueuePairBuilder {
             qp_context: unsafe { ptr::null::<c_void>().offset(self.ctx) } as *mut _,
             send_cq: self.send.cq as *const _ as *mut _,
             recv_cq: self.recv.cq as *const _ as *mut _,
-            srq: ptr::null::<ffi::ibv_srq>() as *mut _,
+            srq: self.srq.unwrap_or(ptr::null::<ffi::ibv_srq>() as *mut _),
             cap: ffi::ibv_qp_cap {
                 max_send_wr: self.max_send_wr,
                 max_recv_wr: self.max_recv_wr,
@@ -1532,6 +1541,11 @@ impl<T> MemoryRegion<T> {
         }
     }
 
+    /// Get the local key used for local access by the RDMA device.
+    pub fn lkey(&self) -> u32 {
+        unsafe { *self.inner.mr }.lkey
+    }
+
     /// Remote region.
     pub fn remote(&self) -> RemoteMemorySlice {
         RemoteMemorySlice {
@@ -1669,6 +1683,11 @@ pub struct ProtectionDomain {
 }
 
 impl ProtectionDomain {
+    /// Get the raw pointer to the underlying `ibv_pd`.
+    pub fn raw_pd(&self) -> *mut ffi::ibv_pd {
+        self.inner.pd
+    }
+
     /// Creates a queue pair builder associated with this protection domain.
     ///
     /// `send` and `recv` are the device `Context` to associate with the send and receive queues
