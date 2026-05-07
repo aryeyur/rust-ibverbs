@@ -1869,7 +1869,6 @@ impl ProtectionDomain {
     }
 }
 
-/// A fully initialized and ready `QueuePair`.
 ///
 /// A queue pair is the actual object that sends and receives data in the RDMA architecture
 /// (something like a socket). It's not exactly like a socket, however. A socket is an abstraction,
@@ -1886,6 +1885,11 @@ unsafe impl Send for QueuePair {}
 unsafe impl Sync for QueuePair {}
 
 impl QueuePair {
+    /// Returns the raw underlying C pointer for advanced operations.
+    pub fn raw_qp(&self) -> *mut ffi::ibv_qp {
+        self.qp
+    }
+
     /// Posts a linked list of Work Requests (WRs) to the Send Queue of this Queue Pair.
     ///
     /// Generates a HW-specific Send Request for the memory at `mr[range]`, and adds it to the tail
