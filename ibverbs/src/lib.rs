@@ -2002,6 +2002,11 @@ unsafe impl Send for QueuePair {}
 unsafe impl Sync for QueuePair {}
 
 impl QueuePair {
+    /// Returns the raw underlying C pointer for advanced operations.
+    pub fn raw_qp(&self) -> *mut ffi::ibv_qp {
+        self.qp
+    }
+
     /// Posts a linked list of Work Requests (WRs) to the Send Queue of this Queue Pair.
     ///
     /// Generates a HW-specific Send Request for the memory at `mr[range]`, and adds it to the tail
