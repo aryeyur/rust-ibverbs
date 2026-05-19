@@ -533,6 +533,7 @@ unsafe impl Sync for CompletionQueueInner {}
 
 /// A completion queue that allows subscribing to the completion of queued sends and receives.
 #[must_use]
+#[derive(Clone)]
 pub struct CompletionQueue {
     inner: Arc<CompletionQueueInner>,
 }
@@ -1683,6 +1684,7 @@ unsafe impl Send for ProtectionDomainInner {}
 
 /// A protection domain for a device's context.
 #[must_use]
+#[derive(Clone)]
 pub struct ProtectionDomain {
     inner: Arc<ProtectionDomainInner>,
 }
@@ -2019,6 +2021,11 @@ impl QueuePair {
     /// Returns the raw underlying C pointer for advanced operations.
     pub fn raw_qp(&self) -> *mut ffi::ibv_qp {
         self.qp
+    }
+
+    /// Returns the local QP number of this QueuePair.
+    pub fn qp_num(&self) -> u32 {
+        unsafe { *self.qp }.qp_num
     }
 
     /// Posts a linked list of Work Requests (WRs) to the Send Queue of this Queue Pair.
